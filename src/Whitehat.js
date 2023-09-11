@@ -53,9 +53,9 @@ export default function Whitehat(props){
                 .domain([stateMin,stateMax])
                 .range([1,0]);
 
-            //TODO: EDIT HERE TO CHANGE THE COLOR SCHEME
+            //TODO: EDIT HERE TO CHANGE THE COLOR SCHEME: DONE
             //this function takes a number 0-1 and returns a color
-            const colorMap = d3.interpolateRdYlGn;
+            const colorMap = d3.interpolateBrBG;
 
             //this set of functions extracts the features given the state name from the geojson
             function getCount(name){
@@ -122,7 +122,7 @@ export default function Whitehat(props){
 
             mapGroup.selectAll('.city').remove();
 
-            //TODO: Add code for a tooltip when you mouse over the city (hint: use the same code for the state tooltip events .on... and modify what is used for the tTip.html)
+            //TODO: Add code for a tooltip when you mouse over the city (hint: use the same code for the state tooltip events .on... and modify what is used for the tTip.html): DONE
             //OPTIONAL: change the color or opacity
             mapGroup.selectAll('.city')
                 .data(cityData).enter()
@@ -131,7 +131,27 @@ export default function Whitehat(props){
                 .attr('cx',d=> projection([d.lng,d.lat])[0])
                 .attr('cy',d=> projection([d.lng,d.lat])[1])
                 .attr('r',d=>cityScale(d.count))
-                .attr('opacity',.5);                
+                .attr('opacity',.5)
+                .on('mouseover',(e,d)=>{      // TOOLTIP
+                    let state = cleanString(d.state);
+                
+                    //this updates the brushed state
+                    if(props.brushedState !== state){
+                        props.setBrushedState(state);
+                    }
+                
+                    let cname = d.city;
+                    let count = d.count;
+                    let text = cname + '</br>'
+                        + 'Gun Deaths: ' + count;
+                    tTip.html(text);
+                }).on('mousemove',(e)=>{
+                    //see app.js for the helper function that makes this easier
+                    props.ToolTip.moveTTipEvent(tTip,e);
+                }).on('mouseout',(e,d)=>{
+                    props.setBrushedState();
+                    props.ToolTip.hideTTip(tTip);
+                });;                
 
             
             //draw a color legend, automatically scaled based on data extents
