@@ -34,11 +34,10 @@ export default function Whitehat(props){
     const mapGroupSelection = useMemo(()=>{
         //wait until the svg is rendered and data is loaded
         if(svg !== undefined & props.map !== undefined & props.data !== undefined){
-
             const stateData = props.data.states;
 
-            //EDIT THIS TO CHANGE WHAT IS USED TO ENCODE COLOR
-            const getEncodedFeature = d => d.count
+            //EDIT THIS TO CHANGE WHAT IS USED TO ENCODE COLOR: DONE
+            const getEncodedFeature = d => (d.count / d.population)*100;
 
             //this section of code sets up the colormap
             const stateCounts = Object.values(stateData).map(getEncodedFeature);
@@ -80,7 +79,7 @@ export default function Whitehat(props){
             //clear earlier drawings
             svg.selectAll('g').remove();
 
-            //OPTIONAL: EDIT THIS TO CHANGE THE DETAILS OF HOW THE MAP IS DRAWN
+            //OPTIONAL: EDIT THIS TO CHANGE THE DETAILS OF HOW THE MAP IS DRAWN: DONE
             //draw borders from map and add tooltip
             let mapGroup = svg.append('g').attr('class','mapbox');
             mapGroup.selectAll('path').filter('.state')
@@ -101,7 +100,7 @@ export default function Whitehat(props){
                     let sname = d.properties.NAME;
                     let count = getCount(sname);
                     let text = sname + '</br>'
-                        + 'Gun Deaths: ' + count;
+                        + 'Gun Deaths/Population: ' + count.toFixed(3) + "%";
                     tTip.html(text);
                 }).on('mousemove',(e)=>{
                     //see app.js for the helper function that makes this easier
@@ -112,7 +111,7 @@ export default function Whitehat(props){
                 });
 
 
-            //TODO: replace or edit the code below to change the city marker being used. Hint: think of the cityScale range (perhaps use area rather than radius). 
+            //TODO: replace or edit the code below to change the city marker being used. Hint: think of the cityScale range (perhaps use area rather than radius).
             //draw markers for each city
             const cityData = props.data.cities
             const cityMax = d3.max(cityData.map(d=>d.count));
@@ -127,10 +126,10 @@ export default function Whitehat(props){
             mapGroup.selectAll('.city')
                 .data(cityData).enter()
                 .append('circle').attr('class','city')
-                .attr('id',d=>d.key)
+                .attr('id',d=> d.key)
                 .attr('cx',d=> projection([d.lng,d.lat])[0])
                 .attr('cy',d=> projection([d.lng,d.lat])[1])
-                .attr('r',d=>cityScale(d.count))
+                .attr('r',d=> cityScale(d.count))
                 .attr('opacity',.5)
                 .on('mouseover',(e,d)=>{      // TOOLTIP
                     let state = cleanString(d.state);
@@ -142,8 +141,9 @@ export default function Whitehat(props){
                 
                     let cname = d.city;
                     let count = d.count;
+                    let male_ct = d.male_count;
                     let text = cname + '</br>'
-                        + 'Gun Deaths: ' + count;
+                        + 'Gun Deaths (Male): ' + male_ct + '<br> Total Gun Deaths: ' + count;
                     tTip.html(text);
                 }).on('mousemove',(e)=>{
                     //see app.js for the helper function that makes this easier
@@ -151,7 +151,7 @@ export default function Whitehat(props){
                 }).on('mouseout',(e,d)=>{
                     props.setBrushedState();
                     props.ToolTip.hideTTip(tTip);
-                });;                
+                });                
 
             
             //draw a color legend, automatically scaled based on data extents
@@ -174,7 +174,7 @@ export default function Whitehat(props){
                         'x': legendX,
                         'y': legendY,
                         'value': val,
-                        'color':color,
+                        'color': color,
                     }
                     entry.text = (entry.value).toFixed(0);
             
