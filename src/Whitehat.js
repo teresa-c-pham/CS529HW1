@@ -11,8 +11,8 @@ export default function Whitehat(props){
     const [svg, height, width, tTip] = useSVGCanvas(d3Container);
     var isZoomed = false;
 
-    //TODO: change the line below to change the size of the white-hat maximum bubble size
-    const maxRadius = width/100;
+    //TODO: change the line below to change the size of the white-hat maximum bubble size : DONE
+    const maxRadius = width/425;
 
     //albers usa projection puts alaska in the corner
     //this automatically convert latitude and longitude to coordinates on the svg canvas
@@ -30,14 +30,14 @@ export default function Whitehat(props){
 
 
     //This is the main loop that renders the code once the data loads
-    //TODO: edit or replace this code to create your white-hat version of the map view; for example, change the color map based on colorbrewer2, 
+    //TODO: edit or replace this code to create your white-hat version of the map view; for example, change the color map based on colorbrewer2, : DONE
     const mapGroupSelection = useMemo(()=>{
         //wait until the svg is rendered and data is loaded
         if(svg !== undefined & props.map !== undefined & props.data !== undefined){
             const stateData = props.data.states;
 
             //EDIT THIS TO CHANGE WHAT IS USED TO ENCODE COLOR: DONE
-            const getEncodedFeature = d => (d.count / d.population)*100;
+            const getEncodedFeature = d => (d.count / d.population * 100000);
 
             //this section of code sets up the colormap
             const stateCounts = Object.values(stateData).map(getEncodedFeature);
@@ -100,7 +100,7 @@ export default function Whitehat(props){
                     let sname = d.properties.NAME;
                     let count = getCount(sname);
                     let text = sname + '</br>'
-                        + 'Gun Deaths/Population: ' + count.toFixed(3) + "%";
+                        + 'Gun Deaths/100,000 Population: ' + count.toFixed(3);
                     tTip.html(text);
                 }).on('mousemove',(e)=>{
                     //see app.js for the helper function that makes this easier
@@ -111,13 +111,13 @@ export default function Whitehat(props){
                 });
 
 
-            //TODO: replace or edit the code below to change the city marker being used. Hint: think of the cityScale range (perhaps use area rather than radius).
+            //TODO: replace or edit the code below to change the city marker being used. Hint: think of the cityScale range (perhaps use area rather than radius). : DONE
             //draw markers for each city
             const cityData = props.data.cities
             const cityMax = d3.max(cityData.map(d=>d.count));
             const cityScale = d3.scaleLinear()
                 .domain([0,cityMax])
-                .range([0,maxRadius]);
+                .range([0,(Math.PI * maxRadius**2)]);
 
             mapGroup.selectAll('.city').remove();
 
@@ -131,6 +131,7 @@ export default function Whitehat(props){
                 .attr('cy',d=> projection([d.lng,d.lat])[1])
                 .attr('r',d=> cityScale(d.count))
                 .attr('opacity',.5)
+                .attr('fill', 'darkred')
                 .on('mouseover',(e,d)=>{      // TOOLTIP
                     let state = cleanString(d.state);
                 
@@ -143,10 +144,10 @@ export default function Whitehat(props){
                     let count = d.count;
                     let male_ct = d.male_count;
                     let text = cname + '</br>'
-                        + 'Gun Deaths (Male): ' + male_ct + '<br> Total Gun Deaths: ' + count;
+                        + 'Gun Deaths (Male): ' + male_ct + 
+                        '<br> Gun Deaths (Female): ' + (count-male_ct);
                     tTip.html(text);
                 }).on('mousemove',(e)=>{
-                    //see app.js for the helper function that makes this easier
                     props.ToolTip.moveTTipEvent(tTip,e);
                 }).on('mouseout',(e,d)=>{
                     props.setBrushedState();
