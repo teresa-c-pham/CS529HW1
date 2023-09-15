@@ -32,16 +32,24 @@ export default function WhiteHatStats(props){
             let entry = {
                 'count': state.count,
                 'name': state.state,
-                'easeOfDrawing': dd === undefined? 5: dd,
+                'abbrev': state.abreviation,
+//                 'easeOfDrawing': dd === undefined? 5: dd,
+                'maleDeaths': state.male_count,
+                'femaleDeaths': state.count - state.male_count,
                 'genderRatio': state.male_count/state.count,
             }
             plotData.push(entry)
         }
 
         //get transforms for each value into x and y coordinates
-        let xScale = d3.scaleLinear()
-            .domain(d3.extent(plotData,d=>d.easeOfDrawing))
+        
+//         let xScale = d3.scaleLinear()
+//             .domain(d3.extent(plotData,d=>d.easeOfDrawing))
+//             .range([margin+radius,width-margin-radius]);
+        let xScale = d3.scaleBand()
+            .domain(stateAbbrev)
             .range([margin+radius,width-margin-radius]);
+        
         let yScale = d3.scaleLinear()
             .domain(d3.extent(plotData,d=>d.count))
             .range([height-margin-radius,margin+radius]);
@@ -49,36 +57,36 @@ export default function WhiteHatStats(props){
 
         //draw a line showing the mean values across the curve
         //this probably isn't actually regression
-        const regressionLine = [];
-        for(let i = 0; i <= 10; i+= 1){
-            let pvals = plotData.filter(d => Math.abs(d.easeOfDrawing - i) <= .5);
-            let meanY = 0;
-            if(pvals.length > 0){
-                for(let entry of pvals){
-                    meanY += entry.count/pvals.length
-                }
-            }
-            let point = [xScale(i),yScale(meanY)]
-            regressionLine.push(point)
-        }
+//         const regressionLine = [];
+//         for(let i = 0; i <= 10; i+= 1){
+//             let pvals = plotData.filter(d => Math.abs(d.easeOfDrawing - i) <= .5);
+//             let meanY = 0;
+//             if(pvals.length > 0){
+//                 for(let entry of pvals){
+//                     meanY += entry.count/pvals.length
+//                 }
+//             }
+//             let point = [xScale(i),yScale(meanY)]
+//             regressionLine.push(point)
+//         }
         
         //scale color by gender ratio for no reason
         let colorScale = d3.scaleDiverging()
             .domain([0,.5,1])
             .range(['magenta','white','navy']);
 
-        //draw the circles for each state
-        svg.selectAll('.dot').remove();
-        svg.selectAll('.dot').data(plotData)
-            .enter().append('circle')
-            .attr('cy',d=> yScale(d.count))
-            .attr('cx',d=>xScale(d.easeOfDrawing))
-            .attr('fill',d=> colorScale(d.genderRatio))
-            .attr('r',10)
+        //draw the rectangles for each state
+        svg.selectAll('.bar').remove();
+        svg.selectAll('.bar').data(plotData)
+            .enter().append('rect')
+            .attr('y',d=> yScale(d.count))
+            .attr('x',d=> xScale(d.abbrev))
+            .attr('height',d=> height-margin-yScale(d.count))
+            .attr('width', width/51)
             .on('mouseover',(e,d)=>{
                 let string = d.name + '</br>'
-                    + 'Gun Deaths: ' + d.count + '</br>'
-                    + 'Difficulty Drawing: ' + d.easeOfDrawing;
+                    + 'Gun Deaths (Male): ' + d.maleDeaths + '</br>'
+                    + 'Gun Deaths (Female): ' + d.femaleDeaths;
                 props.ToolTip.moveTTipEvent(tTip,e)
                 tTip.html(string)
             }).on('mousemove',(e)=>{
@@ -88,12 +96,12 @@ export default function WhiteHatStats(props){
             });
            
         //draw the line
-        svg.selectAll('.regressionLine').remove();
-        svg.append('path').attr('class','regressionLine')
-            .attr('d',d3.line().curve(d3.curveBasis)(regressionLine))
-            .attr('stroke-width',5)
-            .attr('stroke','black')
-            .attr('fill','none');
+//         svg.selectAll('.regressionLine').remove();
+//         svg.append('path').attr('class','regressionLine')
+//             .attr('d',d3.line().curve(d3.curveBasis)(regressionLine))
+//             .attr('stroke-width',5)
+//             .attr('stroke','black')
+//             .attr('fill','none');
 
         //change the title
         const labelSize = margin/2;
@@ -104,7 +112,7 @@ export default function WhiteHatStats(props){
             .attr('text-anchor','middle')
             .attr('font-size',labelSize)
             .attr('font-weight','bold')
-            .text('How Hard it Is To Draw Each State Vs Gun Deaths');
+            .text('Total Gun Deaths by Gender');
 
         //change the disclaimer here
         svg.append('text')
@@ -112,11 +120,12 @@ export default function WhiteHatStats(props){
             .attr('y',height/3)
             .attr('text-anchor','end')
             .attr('font-size',10)
-            .text("I'm just asking questions");
+            .text("Ratio of Male to Female Deaths");
 
         //draw basic axes using the x and y scales
         svg.selectAll('g').remove()
         svg.append('g')
+            .style("font", "8px times")
             .attr('transform',`translate(0,${height-margin+1})`)
             .call(d3.axisBottom(xScale))
 
@@ -134,6 +143,14 @@ export default function WhiteHatStats(props){
         ></div>
     );
 }
+
+
+const stateAbbrev = ['AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE',
+                     'FL', 'GA', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY',
+                     'LA', 'MA', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT',
+                     'NC', 'ND', 'NE', 'NH', 'NJ', 'NM', 'NV', 'NY', 'OH',
+                     'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT',
+                     'VA', 'VT', 'WA', 'WI', 'WV', 'WY']
 //END of TODO #1.
 
  
