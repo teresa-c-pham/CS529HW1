@@ -97,6 +97,7 @@ export default function Whitehat(props){
                     if(props.brushedState !== state){
                         props.setBrushedState(state);
                     }
+                    console.log(d);
                     let sname = d.properties.NAME;
                     let count = getCount(sname);
                     let text = sname + '</br>'
